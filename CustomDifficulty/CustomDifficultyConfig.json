@@ -1,0 +1,11 @@
+{
+  "StamRegenRate": 12,
+  "HealthRegenRate": 3,
+  "ManaRegenRate": 1,
+  "StamBoost": 20,
+  "HealthBoost": 20,
+  "ManaBoost": 0,
+  "PouchCapacity": 30,
+  "MoveBoost": 0.25,
+  "BackpackCapacity": 100
+}
