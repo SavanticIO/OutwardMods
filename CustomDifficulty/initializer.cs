@@ -65,15 +65,15 @@ namespace CustomDifficulty
         {   
             if(gameData.BurntStaminaRegen > 0f)
             {
-                burntStamField.SetValue(instance, new Stat(Mathf.Clamp(instance.StaminaBurn - gameData.BurntStaminaRegen * instance.UpdateDeltaTime, 0f, instance.ActiveMaxStamina)));
+                burntStamField.SetValue(instance, new Stat(Mathf.Clamp(instance.StaminaBurn - gameData.BurntStaminaRegen * instance.UpdateDeltaTime, 0f, instance.ActiveMaxStamina*0.9f)));
             }
             if(gameData.BurntHealthRegen > 0f)
             {
-                burntHealthField.SetValue(instance, new Stat(Mathf.Clamp(instance.HealthBurn - gameData.BurntHealthRegen * instance.UpdateDeltaTime, 0f, instance.ActiveMaxHealth)));
+                burntHealthField.SetValue(instance, new Stat(Mathf.Clamp(instance.HealthBurn - gameData.BurntHealthRegen * instance.UpdateDeltaTime, 0f, instance.ActiveMaxHealth*0.9f)));
             }
             if(gameData.BurntManaRegen > 0f)
             {
-                burntManaField.SetValue(instance, new Stat(Mathf.Clamp(instance.ManaBurn - gameData.BurntManaRegen * instance.UpdateDeltaTime, 0f, instance.ActiveMaxMana)));
+                burntManaField.SetValue(instance, new Stat(Mathf.Clamp(instance.ManaBurn - gameData.BurntManaRegen * instance.UpdateDeltaTime, 0f, instance.ActiveMaxMana*0.5f)));
             }
             original.Invoke(instance);
         }
