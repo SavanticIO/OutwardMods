@@ -13,5 +13,8 @@
   "SleepDepleteRate": 0,
   "BurntStaminaRegen": 0,
   "BurntHealthRegen": 0,
-  "BurntManaRegen": 0
+  "BurntManaRegen": 0,
+  "ManaHealthReduction": 5,
+  "ManaStaminaReduction": 5,
+  "ManaAugment": 20
 }

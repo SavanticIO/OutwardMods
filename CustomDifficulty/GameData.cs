@@ -22,5 +22,8 @@ namespace CustomDifficulty
         public float BurntStaminaRegen;
         public float BurntHealthRegen;
         public float BurntManaRegen;
+        public float ManaHealthReduction;
+        public float ManaStaminaReduction;
+        public float ManaAugment;
     }
 }

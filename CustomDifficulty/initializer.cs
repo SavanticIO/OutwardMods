@@ -25,6 +25,10 @@ namespace CustomDifficulty
         FieldInfo foodRateField = typeof(PlayerCharacterStats).GetField("m_foodDepletionRate", BindingFlags.Instance | BindingFlags.NonPublic);
         FieldInfo drinkRateField = typeof(PlayerCharacterStats).GetField("m_drinkDepletionRate", BindingFlags.Instance | BindingFlags.NonPublic);
         FieldInfo sleepRateField = typeof(PlayerCharacterStats).GetField("m_sleepDepletionRate", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo m_manaHealthReduction = typeof(CharacterStats).GetField("m_manaHealthReduction", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo m_manaStaminaReduction = typeof(CharacterStats).GetField("m_manaStaminaReduction", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo m_manaAugmentation = typeof(CharacterStats).GetField("m_manaAugmentation", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo m_manaPoint = typeof(CharacterStats).GetField("m_manaPoint", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public void Initialize()
         {
@@ -33,13 +37,33 @@ namespace CustomDifficulty
         }
 
         public void Patch()
-        {
+        {   
+            On.CharacterStats.OnRefreshVitalMaxStat += new On.CharacterStats.hook_OnRefreshVitalMaxStat(this.CustomDifficultyManaAugmentPatch);
             On.PlayerCharacterStats.OnAwake += new On.PlayerCharacterStats.hook_OnAwake(this.CustomDifficultyPlayerStatsPatch);
             On.ItemContainer.OnAwake += new On.ItemContainer.hook_OnAwake(this.CustomDifficultyContainerPatch);
             On.PlayerCharacterStats.OnStart += new On.PlayerCharacterStats.hook_OnStart(this.CustomDifficultyPlayerNeedsPatch);
             On.PlayerCharacterStats.OnUpdateStats += new On.PlayerCharacterStats.hook_OnUpdateStats(this.CustomDifficultyPlayerBurntPatch);
         }
 
+        public void CustomDifficultyManaAugmentPatch(On.CharacterStats.orig_OnRefreshVitalMaxStat original, CharacterStats instance)
+        {
+            Character m_character = instance.Character
+            if (this.m_manaHealthReduction.GetValue(instance) != null)
+            {
+                this.m_manaHealthReduction.Refresh((float)this.m_manaPoint.GetValue(instance) * gameData.ManaHealthReduction + m_character.Inventory.Equipment.GetMaxHealthBonus());
+            }
+            if (this.m_manaStaminaReduction.GetValue(instance) != null)
+            {
+                this.m_manaStaminaReduction.Refresh((float)this.m_manaPoint.GetValue(instance) * gameData.ManaStaminaReduction);
+            }
+            if (this.m_manaAugmentation.GetValue(instance) != null)
+            {
+                this.m_manaAugmentation.Refresh((float)this.m_manaPoint.GetValue(instance) * gameData.ManaAugment);
+            }
+            this.healthField.Update();
+            this.stamField.Update();
+            this.manaField.Update();
+        }
         public void CustomDifficultyPlayerStatsPatch(On.PlayerCharacterStats.orig_OnAwake original, PlayerCharacterStats instance)
         {
             instance.RefreshVitalMaxStat(true);
