@@ -8,10 +8,10 @@
   "PouchCapacity": 30,
   "MoveBoost": 0.25,
   "BackpackCapacity": 100,
-  "FoodDepleteRate": 1,
-  "DrinkDepleteRate": 1,
-  "SleepDepleteRate": 1,
-  "BurntStaminaRegen": 1,
-  "BurntHealthRegen": 1,
-  "BurntManaRegen": 1
+  "FoodDepleteRate": 0,
+  "DrinkDepleteRate": 0,
+  "SleepDepleteRate": 0,
+  "BurntStaminaRegen": 0,
+  "BurntHealthRegen": 0,
+  "BurntManaRegen": 0
 }
