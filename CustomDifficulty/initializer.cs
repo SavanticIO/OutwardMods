@@ -11,6 +11,21 @@ namespace CustomDifficulty
 
         GameData gameData;
 
+        FieldInfo stamRegenField = typeof(CharacterStats).GetField("m_staminaRegen", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo healthRegenField = typeof(CharacterStats).GetField("m_healthRegen", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo manaRegenField = typeof(CharacterStats).GetField("m_manaRegen", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo stamField = typeof(CharacterStats).GetField("m_maxStamina", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo healthField = typeof(CharacterStats).GetField("m_maxHealthStat", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo manaField = typeof(CharacterStats).GetField("m_maxManaStat", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo pouchField = typeof(CharacterStats).GetField("m_pouchCapacity", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo moveField = typeof(CharacterStats).GetField("m_movementSpeed", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo burntStamField = typeof(CharacterStats).GetField("m_burntStamina", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo burntHealthField = typeof(CharacterStats).GetField("m_burntHealth", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo burntManaField = typeof(CharacterStats).GetField("m_burntMana", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo foodRateField = typeof(PlayerCharacterStats).GetField("m_foodDepletionRate", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo drinkRateField = typeof(PlayerCharacterStats).GetField("m_drinkDepletionRate", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo sleepRateField = typeof(PlayerCharacterStats).GetField("m_sleepDepletionRate", BindingFlags.Instance | BindingFlags.NonPublic);
+
         public void Initialize()
         {
             gameData = this.LoadSettings();
@@ -21,23 +36,16 @@ namespace CustomDifficulty
         {
             On.PlayerCharacterStats.OnAwake += new On.PlayerCharacterStats.hook_OnAwake(this.CustomDifficultyPlayerStatsPatch);
             On.ItemContainer.OnAwake += new On.ItemContainer.hook_OnAwake(this.CustomDifficultyContainerPatch);
+            On.PlayerCharacterStats.OnStart += new On.PlayerCharacterStats.hook_OnStart(this.CustomDifficultyPlayerNeedsPatch);
+            On.PlayerCharacterStats.OnUpdateStats += new On.PlayerCharacterStats.hook_OnUpdateStats(this.CustomDifficultyPlayerBurntPatch);
         }
 
         public void CustomDifficultyPlayerStatsPatch(On.PlayerCharacterStats.orig_OnAwake original, PlayerCharacterStats instance)
         {
             instance.RefreshVitalMaxStat(true);
-            FieldInfo stamRegenField = typeof(CharacterStats).GetField("m_staminaRegen", BindingFlags.Instance | BindingFlags.NonPublic);
-            FieldInfo HealthRegenField = typeof(CharacterStats).GetField("m_healthRegen", BindingFlags.Instance | BindingFlags.NonPublic);
-            FieldInfo ManaRegenField = typeof(CharacterStats).GetField("m_manaRegen", BindingFlags.Instance | BindingFlags.NonPublic);
-            FieldInfo stamField = typeof(CharacterStats).GetField("m_maxStamina", BindingFlags.Instance | BindingFlags.NonPublic);
-            FieldInfo healthField = typeof(CharacterStats).GetField("m_maxHealthStat", BindingFlags.Instance | BindingFlags.NonPublic);
-            FieldInfo manaField = typeof(CharacterStats).GetField("m_maxManaStat", BindingFlags.Instance | BindingFlags.NonPublic);
-            FieldInfo pouchField = typeof(CharacterStats).GetField("m_pouchCapacity", BindingFlags.Instance | BindingFlags.NonPublic);
-            FieldInfo moveField = typeof(CharacterStats).GetField("m_movementSpeed", BindingFlags.Instance | BindingFlags.NonPublic);
-            FieldInfo breakField = typeof(PlayerCharacterStats).GetField("m_usedBreakthroughCount", BindingFlags.Instance | BindingFlags.NonPublic);
             stamRegenField.SetValue(instance, new Stat(instance.StaminaRegen + gameData.StamRegenRate));
-            HealthRegenField.SetValue(instance, new Stat(instance.HeatRegenRate + gameData.HealthRegenRate));
-            ManaRegenField.SetValue(instance, new Stat(instance.ManaRegen + gameData.ManaRegenRate));
+            healthRegenField.SetValue(instance, new Stat(instance.HeatRegenRate + gameData.HealthRegenRate));
+            manaRegenField.SetValue(instance, new Stat(instance.ManaRegen + gameData.ManaRegenRate));
             stamField.SetValue(instance, new Stat(instance.MaxStamina + gameData.StamBoost));
             healthField.SetValue(instance, new Stat(instance.MaxHealth + gameData.HealthBoost));
             manaField.SetValue(instance, new Stat(instance.MaxMana + gameData.ManaBoost));
@@ -45,8 +53,31 @@ namespace CustomDifficulty
             moveField.SetValue(instance, new Stat(instance.MovementSpeed + gameData.MoveBoost));
             original.Invoke(instance);
         }
+        public void CustomDifficultyPlayerNeedsPatch(On.PlayerCharacterStats.orig_OnStart original, PlayerCharacterStats instance)
+        {
+            foodRateField.SetValue(instance, new Stat(instance.FoodDepleteRate - gameData.FoodDepleteRate));
+            drinkRateField.SetValue(instance, new Stat(instance.DrinkDepleteRate - gameData.DrinkDepleteRate));
+            sleepRateField.SetValue(instance, new Stat(instance.SleepDepleteRate - gameData.SleepDepleteRate));
+            original.Invoke(instance);
+        }
 
-        public void CustomDifficultyContainerPatch(On.ItemContainer.orig_OnAwake original, ItemContainer instance)
+        public void CustomDifficultyPlayerBurntPatch(On.PlayerCharacterStats.orig_OnAwake original, PlayerCharacterStats instance)
+        {   
+            if(gameData.BurntStaminaRegen > 0f)
+            {
+                burntStamField.SetValue(instance, new Stat(Mathf.Clamp(instance.StaminaBurn - gameData.BurntStaminaRegen * instance.UpdateDeltaTime, 0f, instance.ActiveMaxStamina)));
+            }
+            if(gameData.BurntHealthRegen > 0f)
+            {
+                burntHealthField.SetValue(instance, new Stat(Mathf.Clamp(instance.HealthBurn - gameData.BurntHealthRegen * instance.UpdateDeltaTime, 0f, instance.ActiveMaxHealth)));
+            }
+            if(gameData.BurntManaRegen > 0f)
+            {
+                burntManaField.SetValue(instance, new Stat(Mathf.Clamp(instance.ManaBurn - gameData.BurntManaRegen * instance.UpdateDeltaTime, 0f, instance.ActiveMaxMana)));
+            }
+            original.Invoke(instance);
+        }
+        public void CustomDifficultyContainerPatch(On.ItemContainer.orig_OnUpdateStats original, PlayerCharacterStats instance)
         {
             FieldInfo bagField = typeof(ItemContainer).GetField("m_baseContainerCapacity", BindingFlags.Instance | BindingFlags.NonPublic);
             bagField.SetValue(instance, (instance.ContainerCapacity + gameData.BackpackCapacity));

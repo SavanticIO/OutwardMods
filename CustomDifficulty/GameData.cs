@@ -16,5 +16,11 @@ namespace CustomDifficulty
         public float PouchCapacity;
         public float MoveBoost;
         public float BackpackCapacity;
+        public float FoodDepleteRate;
+        public float DrinkDepleteRate;
+        public float SleepDepleteRate;
+        public float BurntStaminaRegen;
+        public float BurntHealthRegen;
+        public float BurntManaRegen;
     }
 }
