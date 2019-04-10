@@ -61,7 +61,7 @@ namespace CustomDifficulty
             original.Invoke(instance);
         }
 
-        public void CustomDifficultyPlayerBurntPatch(On.PlayerCharacterStats.orig_OnAwake original, PlayerCharacterStats instance)
+        public void CustomDifficultyPlayerBurntPatch(On.PlayerCharacterStats.orig_OnUpdateStats original, PlayerCharacterStats instance)
         {   
             if(gameData.BurntStaminaRegen > 0f)
             {
@@ -77,7 +77,7 @@ namespace CustomDifficulty
             }
             original.Invoke(instance);
         }
-        public void CustomDifficultyContainerPatch(On.ItemContainer.orig_OnUpdateStats original, PlayerCharacterStats instance)
+        public void CustomDifficultyContainerPatch(On.ItemContainer.orig_OnAwake original, PlayerCharacterStats instance)
         {
             FieldInfo bagField = typeof(ItemContainer).GetField("m_baseContainerCapacity", BindingFlags.Instance | BindingFlags.NonPublic);
             bagField.SetValue(instance, (instance.ContainerCapacity + gameData.BackpackCapacity));
