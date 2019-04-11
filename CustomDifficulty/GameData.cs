@@ -25,5 +25,6 @@ namespace CustomDifficulty
         public float ManaHealthReduction;
         public float ManaStaminaReduction;
         public float ManaAugment;
+        public bool EnableSit;
     }
 }
