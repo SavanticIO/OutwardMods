@@ -83,17 +83,7 @@ namespace CustomDifficulty
         public void CustomDifficultyPlayerStatsPatch(On.PlayerCharacterStats.orig_OnStart original, PlayerCharacterStats instance)
         {   
             original.Invoke(instance);
-            if(gameData.EnableSit)
-            {   
-                if((Character.SpellCastType)m_currentSpellCastType.GetValue(instance) == Character.SpellCastType.Sit)
-                {
-                    applyStats(instance);
-                }
-            }
-            else
-            {
-                applyStats(instance);
-            }
+            applyStatsRegen(instance);
             if (gameData.StamBoost != 0)
             {
                 stamField.SetValue(instance, new Stat(instance.MaxStamina + gameData.StamBoost));
@@ -165,7 +155,7 @@ namespace CustomDifficulty
             }
         }
 
-        public void applyStats(PlayerCharacterStats instance)
+        public void applyStatsRegen(PlayerCharacterStats instance)
         {
             if (gameData.StamRegenRate != 0)
             {
