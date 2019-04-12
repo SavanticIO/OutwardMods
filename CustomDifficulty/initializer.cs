@@ -40,10 +40,9 @@ namespace CustomDifficulty
         public void Patch()
         {   
             On.CharacterStats.RefreshVitalMaxStat += new On.CharacterStats.hook_RefreshVitalMaxStat(this.CustomDifficultyManaAugmentPatch);
-            On.PlayerCharacterStats.OnAwake += new On.PlayerCharacterStats.hook_OnAwake(this.CustomDifficultyPlayerStatsPatch);
+            On.PlayerCharacterStats.OnStart += new On.PlayerCharacterStats.hook_OnStart(this.CustomDifficultyPlayerStatsPatch);
+            On.PlayerCharacterStats.OnUpdateStats += new On.PlayerCharacterStats.hook_OnUpdateStats(this.CustomDifficultyBurntStatPatch);
             On.ItemContainer.OnAwake += new On.ItemContainer.hook_OnAwake(this.CustomDifficultyContainerPatch);
-            On.PlayerCharacterStats.OnStart += new On.PlayerCharacterStats.hook_OnStart(this.CustomDifficultyPlayerNeedsPatch);
-            On.PlayerCharacterStats.OnUpdateStats += new On.PlayerCharacterStats.hook_OnUpdateStats(this.CustomDifficultyPlayerBurntPatch);
         }
 
         public void CustomDifficultyManaAugmentPatch(On.CharacterStats.orig_RefreshVitalMaxStat original, CharacterStats instance, bool _updateNeeds = false)
@@ -80,8 +79,9 @@ namespace CustomDifficulty
             }
             
         }
-        public void CustomDifficultyPlayerStatsPatch(On.PlayerCharacterStats.orig_OnAwake original, PlayerCharacterStats instance)
-        {
+
+        public void CustomDifficultyPlayerStatsPatch(On.PlayerCharacterStats.orig_OnStart original, PlayerCharacterStats instance)
+        {   
             original.Invoke(instance);
             if (gameData.StamRegenRate != 0)
             {
@@ -115,17 +115,6 @@ namespace CustomDifficulty
             {
                 moveField.SetValue(instance, new Stat(instance.MovementSpeed + gameData.MoveBoost));
             }
-            
-            
-            
-            
-            
-            
-            
-            
-        }
-        public void CustomDifficultyPlayerNeedsPatch(On.PlayerCharacterStats.orig_OnStart original, PlayerCharacterStats instance)
-        {   
             if (gameData.FoodDepleteRate != 0)
             {
                 foodRateField.SetValue(instance, new Stat((float)foodRateField.GetValue(instance) - gameData.FoodDepleteRate));
@@ -138,10 +127,9 @@ namespace CustomDifficulty
             {
                 sleepRateField.SetValue(instance, new Stat((float)sleepRateField.GetValue(instance) - gameData.SleepDepleteRate));
             }
-            original.Invoke(instance);
         }
 
-        public void CustomDifficultyPlayerBurntPatch(On.PlayerCharacterStats.orig_OnUpdateStats original, PlayerCharacterStats instance)
+        public void CustomDifficultyBurntStatPatch(On.PlayerCharacterStats.orig_OnUpdateStats original, PlayerCharacterStats instance)
         {   
             if (gameData.BurntStaminaRegen != 0 || gameData.BurntHealthRegen != 0 || gameData.BurntManaRegen != 0)
             {
