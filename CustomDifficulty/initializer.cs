@@ -74,7 +74,7 @@ namespace CustomDifficulty
         }
         public void CustomDifficultyPlayerStatsPatch(On.PlayerCharacterStats.orig_OnAwake original, PlayerCharacterStats instance)
         {
-            instance.RefreshVitalMaxStat(true);
+            original.Invoke(instance);
             stamRegenField.SetValue(instance, new Stat(instance.StaminaRegen + gameData.StamRegenRate));
             healthRegenField.SetValue(instance, new Stat(instance.HealthRegen + gameData.HealthRegenRate));
             manaRegenField.SetValue(instance, new Stat(instance.ManaRegen + gameData.ManaRegenRate));
@@ -83,7 +83,6 @@ namespace CustomDifficulty
             manaField.SetValue(instance, new Stat(instance.MaxMana + gameData.ManaBoost));
             pouchField.SetValue(instance, new Stat(instance.PouchCapacity - gameData.BackpackCapacity + gameData.PouchCapacity));
             moveField.SetValue(instance, new Stat(instance.MovementSpeed + gameData.MoveBoost));
-            original.Invoke(instance);
         }
         public void CustomDifficultyPlayerNeedsPatch(On.PlayerCharacterStats.orig_OnStart original, PlayerCharacterStats instance)
         {
@@ -95,7 +94,8 @@ namespace CustomDifficulty
 
         public void CustomDifficultyPlayerBurntPatch(On.PlayerCharacterStats.orig_OnUpdateStats original, PlayerCharacterStats instance)
         {   
-            //FieldInfo m_currentSpellCastType = instance.GetType().GetField("m_currentSpellCastType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            FieldInfo m_currentSpellCastType = instance.GetType().GetField("m_currentSpellCastType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            Debug.Log("m_currentSpellCastType Value: "+m_currentSpellCastType.GetValue(instance));
             //if(gameData.EnableSit)
             //{
             //    if((Character.SpellCastType)m_currentSpellCastType.GetValue(instance) == Character.SpellCastType.Sit)
@@ -107,7 +107,7 @@ namespace CustomDifficulty
             //{
             //    applyBurntRegen(instance);
             //}
-            //original.Invoke(instance);
+            original.Invoke(instance);
         }
 
         public void applyBurntRegen(PlayerCharacterStats instance)
