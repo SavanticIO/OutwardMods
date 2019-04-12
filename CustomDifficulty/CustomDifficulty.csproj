@@ -34,11 +34,18 @@
     <Reference Include="Assembly-CSharp">
       <HintPath>G:\Program Files (x86)\EpicGames\Outward\Outward_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>G:\Program Files (x86)\EpicGames\Outward\Outward_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
     <Reference Include="HOOKS-Assembly-CSharp">
       <HintPath>G:\Program Files (x86)\EpicGames\Outward\Outward_Data\Managed\HOOKS-Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="MonoMod">
       <HintPath>G:\partiality\bin\MonoMod.exe</HintPath>
+    </Reference>
+    <Reference Include="OModAPI">
+      <HintPath>G:\partiality\OModAPI.dll</HintPath>
     </Reference>
     <Reference Include="Partiality">
       <HintPath>G:\partiality\Partiality.dll</HintPath>
