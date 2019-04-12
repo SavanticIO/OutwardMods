@@ -83,17 +83,16 @@ namespace CustomDifficulty
         public void CustomDifficultyPlayerStatsPatch(On.PlayerCharacterStats.orig_OnStart original, PlayerCharacterStats instance)
         {   
             original.Invoke(instance);
-            if (gameData.StamRegenRate != 0)
-            {
-                stamRegenField.SetValue(instance, new Stat(instance.StaminaRegen + gameData.StamRegenRate));
+            if(gameData.EnableSit)
+            {   
+                if((Character.SpellCastType)m_currentSpellCastType.GetValue(instance) == Character.SpellCastType.Sit)
+                {
+                    applyStats(instance);
+                }
             }
-            if (gameData.HealthRegenRate != 0)
+            else
             {
-                healthRegenField.SetValue(instance, new Stat(instance.HealthRegen + gameData.HealthRegenRate));
-            }
-            if (gameData.ManaRegenRate != 0)
-            {
-                manaRegenField.SetValue(instance, new Stat(instance.ManaRegen + gameData.ManaRegenRate));
+                applyStats(instance);
             }
             if (gameData.StamBoost != 0)
             {
@@ -165,6 +164,23 @@ namespace CustomDifficulty
                 burntManaField.SetValue(instance, Mathf.Clamp((float)burntManaField.GetValue(instance) - gameData.BurntManaRegen * UpdateDeltaTime(instance), 0f, instance.ActiveMaxMana*0.5f));
             }
         }
+
+        public void applyStats(PlayerCharacterStats instance)
+        {
+            if (gameData.StamRegenRate != 0)
+            {
+                stamRegenField.SetValue(instance, new Stat(instance.StaminaRegen + gameData.StamRegenRate));
+            }
+            if (gameData.HealthRegenRate != 0)
+            {
+                healthRegenField.SetValue(instance, new Stat(instance.HealthRegen + gameData.HealthRegenRate));
+            }
+            if (gameData.ManaRegenRate != 0)
+            {
+                manaRegenField.SetValue(instance, new Stat(instance.ManaRegen + gameData.ManaRegenRate));
+            }
+        }
+
         public void CustomDifficultyContainerPatch(On.ItemContainer.orig_OnAwake original, ItemContainer instance)
         {   
             if (gameData.BackpackCapacity != 0)
