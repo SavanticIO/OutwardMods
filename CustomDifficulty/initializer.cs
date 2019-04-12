@@ -48,87 +48,142 @@ namespace CustomDifficulty
 
         public void CustomDifficultyManaAugmentPatch(On.CharacterStats.orig_RefreshVitalMaxStat original, CharacterStats instance, bool _updateNeeds = false)
         {   
-            FieldInfo m_character = typeof(CharacterStats).GetField("m_character", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-			Character character = (Character)m_character.GetValue(instance);
-            Stat maxHealthStat = (Stat)healthField.GetValue(instance);
-            Stat maxStamina = (Stat)stamField.GetValue(instance);
-            Stat maxManaStat = (Stat)manaField.GetValue(instance);
-            StatStack manaHealthReduction = (StatStack)m_manaHealthReduction.GetValue(instance);
-            StatStack manaStaminaReduction = (StatStack)m_manaStaminaReduction.GetValue(instance);
-            StatStack manaAugmentation = (StatStack)m_manaAugmentation.GetValue(instance);
-            if (manaHealthReduction != null)
+            if (gameData.ManaStaminaReduction != 0 || gameData.ManaHealthReduction != 0 || gameData.ManaAugment != 0)
             {
-                manaHealthReduction.Refresh((int)m_manaPoint.GetValue(instance) * gameData.ManaHealthReduction + character.Inventory.Equipment.GetMaxHealthBonus());
+                FieldInfo m_character = typeof(CharacterStats).GetField("m_character", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                Character character = (Character)m_character.GetValue(instance);
+                Stat maxHealthStat = (Stat)healthField.GetValue(instance);
+                Stat maxStamina = (Stat)stamField.GetValue(instance);
+                Stat maxManaStat = (Stat)manaField.GetValue(instance);
+                StatStack manaHealthReduction = (StatStack)m_manaHealthReduction.GetValue(instance);
+                StatStack manaStaminaReduction = (StatStack)m_manaStaminaReduction.GetValue(instance);
+                StatStack manaAugmentation = (StatStack)m_manaAugmentation.GetValue(instance);
+                if (manaHealthReduction != null && gameData.ManaHealthReduction != 0)
+                {
+                    manaHealthReduction.Refresh((int)m_manaPoint.GetValue(instance) * gameData.ManaHealthReduction + character.Inventory.Equipment.GetMaxHealthBonus());
+                }
+                if (manaStaminaReduction != null && gameData.ManaStaminaReduction != 0)
+                {
+                    manaStaminaReduction.Refresh((int)m_manaPoint.GetValue(instance) * gameData.ManaStaminaReduction);
+                }
+                if (manaAugmentation != null && gameData.ManaAugment != 0)
+                {
+                    manaAugmentation.Refresh((int)m_manaPoint.GetValue(instance) * gameData.ManaAugment);
+                }
+                maxHealthStat.Update();
+                maxStamina.Update();
+                maxManaStat.Update();
             }
-            if (manaStaminaReduction != null)
+            else
             {
-                manaStaminaReduction.Refresh((int)m_manaPoint.GetValue(instance) * gameData.ManaStaminaReduction);
+                original.Invoke(instance);
             }
-            if (manaAugmentation != null)
-            {
-                manaAugmentation.Refresh((int)m_manaPoint.GetValue(instance) * gameData.ManaAugment);
-            }
-            maxHealthStat.Update();
-		    maxStamina.Update();
-		    maxManaStat.Update();
+            
         }
         public void CustomDifficultyPlayerStatsPatch(On.PlayerCharacterStats.orig_OnAwake original, PlayerCharacterStats instance)
         {
             original.Invoke(instance);
-            stamRegenField.SetValue(instance, new Stat(instance.StaminaRegen + gameData.StamRegenRate));
-            healthRegenField.SetValue(instance, new Stat(instance.HealthRegen + gameData.HealthRegenRate));
-            manaRegenField.SetValue(instance, new Stat(instance.ManaRegen + gameData.ManaRegenRate));
-            stamField.SetValue(instance, new Stat(instance.MaxStamina + gameData.StamBoost));
-            healthField.SetValue(instance, new Stat(instance.MaxHealth + gameData.HealthBoost));
-            manaField.SetValue(instance, new Stat(instance.MaxMana + gameData.ManaBoost));
-            pouchField.SetValue(instance, new Stat(instance.PouchCapacity - gameData.BackpackCapacity + gameData.PouchCapacity));
-            moveField.SetValue(instance, new Stat(instance.MovementSpeed + gameData.MoveBoost));
+            if (gameData.StamRegenRate != 0)
+            {
+                stamRegenField.SetValue(instance, new Stat(instance.StaminaRegen + gameData.StamRegenRate));
+            }
+            if (gameData.HealthRegenRate != 0)
+            {
+                healthRegenField.SetValue(instance, new Stat(instance.HealthRegen + gameData.HealthRegenRate));
+            }
+            if (gameData.ManaRegenRate != 0)
+            {
+                manaRegenField.SetValue(instance, new Stat(instance.ManaRegen + gameData.ManaRegenRate));
+            }
+            if (gameData.StamBoost != 0)
+            {
+                stamField.SetValue(instance, new Stat(instance.MaxStamina + gameData.StamBoost));
+            }
+            if (gameData.HealthBoost != 0)
+            {
+                healthField.SetValue(instance, new Stat(instance.MaxHealth + gameData.HealthBoost));
+            }
+            if (gameData.ManaBoost != 0)
+            {
+                manaField.SetValue(instance, new Stat(instance.MaxMana + gameData.ManaBoost));
+            }
+            if (gameData.PouchCapacity+gameData.BackpackCapacity != 0)
+            {
+                pouchField.SetValue(instance, new Stat(instance.PouchCapacity - gameData.BackpackCapacity + gameData.PouchCapacity));
+            }
+            if (gameData.MoveBoost != 0)
+            {
+                moveField.SetValue(instance, new Stat(instance.MovementSpeed + gameData.MoveBoost));
+            }
+            
+            
+            
+            
+            
+            
+            
+            
         }
         public void CustomDifficultyPlayerNeedsPatch(On.PlayerCharacterStats.orig_OnStart original, PlayerCharacterStats instance)
-        {
-            foodRateField.SetValue(instance, new Stat((float)foodRateField.GetValue(instance) - gameData.FoodDepleteRate));
-            drinkRateField.SetValue(instance, new Stat((float)drinkRateField.GetValue(instance) - gameData.DrinkDepleteRate));
-            sleepRateField.SetValue(instance, new Stat((float)sleepRateField.GetValue(instance) - gameData.SleepDepleteRate));
+        {   
+            if (gameData.FoodDepleteRate != 0)
+            {
+                foodRateField.SetValue(instance, new Stat((float)foodRateField.GetValue(instance) - gameData.FoodDepleteRate));
+            }
+            if (gameData.DrinkDepleteRate != 0)
+            {
+                drinkRateField.SetValue(instance, new Stat((float)drinkRateField.GetValue(instance) - gameData.DrinkDepleteRate));
+            }
+            if (gameData.SleepDepleteRate != 0)
+            {
+                sleepRateField.SetValue(instance, new Stat((float)sleepRateField.GetValue(instance) - gameData.SleepDepleteRate));
+            }
             original.Invoke(instance);
         }
 
         public void CustomDifficultyPlayerBurntPatch(On.PlayerCharacterStats.orig_OnUpdateStats original, PlayerCharacterStats instance)
         {   
-            FieldInfo m_currentSpellCastType = instance.GetType().GetField("m_currentSpellCastType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            Debug.Log("m_currentSpellCastType Value: "+m_currentSpellCastType.GetValue(instance));
-            //if(gameData.EnableSit)
-            //{
-            //    if((Character.SpellCastType)m_currentSpellCastType.GetValue(instance) == Character.SpellCastType.Sit)
-            //    {
-            //        applyBurntRegen(instance);
-            //    }
-            //} 
-            //else 
-            //{
-            //    applyBurntRegen(instance);
-            //}
+            if (gameData.BurntStaminaRegen != 0 || gameData.BurntHealthRegen != 0 || gameData.BurntManaRegen != 0)
+            {
+                FieldInfo m_currentSpellCastType = instance.GetType().GetField("m_currentSpellCastType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                Debug.Log("m_currentSpellCastType Value: "+m_currentSpellCastType.GetValue(instance));
+                if(gameData.EnableSit)
+                {
+                //    if((Character.SpellCastType)m_currentSpellCastType.GetValue(instance) == Character.SpellCastType.Sit)
+                //    {
+                //        applyBurntRegen(instance);
+                //    }
+                } 
+                else 
+                {
+                //    applyBurntRegen(instance);
+                }
+            }
             original.Invoke(instance);
         }
 
         public void applyBurntRegen(PlayerCharacterStats instance)
         {
-            if(gameData.BurntStaminaRegen > 0f)
+            if(gameData.BurntStaminaRegen != 0)
             {
                 burntStamField.SetValue(instance, Mathf.Clamp((float)burntStamField.GetValue(instance) - gameData.BurntStaminaRegen * UpdateDeltaTime(instance), 0f, instance.ActiveMaxStamina*0.9f));
             }
-            if(gameData.BurntHealthRegen > 0f)
+            if(gameData.BurntHealthRegen != 0)
             {
                 burntHealthField.SetValue(instance, Mathf.Clamp((float)burntHealthField.GetValue(instance) - gameData.BurntHealthRegen * UpdateDeltaTime(instance), 0f, instance.ActiveMaxHealth*0.9f));
             }
-            if(gameData.BurntManaRegen > 0f)
+            if(gameData.BurntManaRegen != 0)
             {
                 burntManaField.SetValue(instance, Mathf.Clamp((float)burntManaField.GetValue(instance) - gameData.BurntManaRegen * UpdateDeltaTime(instance), 0f, instance.ActiveMaxMana*0.5f));
             }
         }
         public void CustomDifficultyContainerPatch(On.ItemContainer.orig_OnAwake original, ItemContainer instance)
-        {
-            FieldInfo bagField = typeof(ItemContainer).GetField("m_baseContainerCapacity", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            bagField.SetValue(instance, (instance.ContainerCapacity + gameData.BackpackCapacity));
+        {   
+            if (gameData.BackpackCapacity != 0)
+            {
+                FieldInfo bagField = typeof(ItemContainer).GetField("m_baseContainerCapacity", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                bagField.SetValue(instance, (instance.ContainerCapacity + gameData.BackpackCapacity));
+            }
             original.Invoke(instance);
         }
 
