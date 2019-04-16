@@ -29,6 +29,13 @@ namespace CustomDifficulty
         FieldInfo m_manaAugmentation = typeof(CharacterStats).GetField("m_manaAugmentation", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         FieldInfo m_manaPoint = typeof(CharacterStats).GetField("m_manaPoint", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         FieldInfo m_lastUpdateTime = typeof(CharacterStats).GetField("m_lastUpdateTime", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        FieldInfo m_currentSpellCastType = typeof(Character).GetField("m_currentSpellCastType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        FieldInfo m_character = typeof(CharacterStats).GetField("m_character", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        FieldInfo m_baseContainerCapacity = typeof(ItemContainer).GetField("m_baseContainerCapacity", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        FieldInfo m_generalBurdenPenaltyActive = typeof(PlayerCharacterStats).GetField("m_generalBurdenPenaltyActive", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        FieldInfo m_generalBurdenRatio = typeof(PlayerCharacterStats).GetField("m_generalBurdenRatio", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        FieldInfo m_staminaUseModifiers = typeof(CharacterStats).GetField("m_staminaUseModifiers", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
 
         public void Initialize()
         {
@@ -39,8 +46,9 @@ namespace CustomDifficulty
         public void Patch()
         {   
             //On.CharacterStats.RefreshVitalMaxStat += new On.CharacterStats.hook_RefreshVitalMaxStat(this.CustomDifficultyManaAugmentPatch);
-            On.PlayerCharacterStats.OnStart += new On.PlayerCharacterStats.hook_OnStart(this.CustomDifficultyPlayerStatsPatch);
+            On.PlayerCharacterStats.OnStart += new On.PlayerCharacterStats.hook_OnAwake(this.CustomDifficultyPlayerStatsPatch);
             On.PlayerCharacterStats.OnUpdateStats += new On.PlayerCharacterStats.hook_OnUpdateStats(this.CustomDifficultyBurntStatPatch);
+            On.PlayerCharacterStats.OnUpdateWeight += new On.PlayerCharacterStats.hook_OnUpdateWeight(this.CustomDifficultyWeightPatch);
             On.ItemContainer.OnAwake += new On.ItemContainer.hook_OnAwake(this.CustomDifficultyContainerPatch);
         }
 
@@ -79,7 +87,7 @@ namespace CustomDifficulty
             
         //}
 
-        public void CustomDifficultyPlayerStatsPatch(On.PlayerCharacterStats.orig_OnStart original, PlayerCharacterStats instance)
+        public void CustomDifficultyPlayerStatsPatch(On.PlayerCharacterStats.orig_OnAwake original, PlayerCharacterStats instance)
         {   
             original.Invoke(instance);
             applyStatsRegen(instance);
@@ -113,12 +121,45 @@ namespace CustomDifficulty
             }
         }
 
+        public void CustomDifficultyWeightPatch(On.PlayerCharacterStats.orig_OnUpdateWeight original, PlayerCharacterStats instance)
+        {   
+            Character character = (Character)m_character.GetValue(instance);
+            original.Invoke(instance);
+            if (gameData.PouchCapacity != 0 || gameData.BackpackCapacity != 0)
+            {
+                if ((bool)m_generalBurdenPenaltyActive.GetValue(instance))
+                {
+                    m_generalBurdenRatio.SetValue(instance,1f);
+                    m_generalBurdenPenaltyActive.SetValue(instance, false);
+                    (Stat)moveField.GetValue(instance).RemoveMultiplierStack("Burden");
+                    (Stat)stamRegenField.GetValue(instance).RemoveMultiplierStack("Burden");
+                    (Stat)m_staminaUseModifiers.GetValue(instance).RemoveMultiplierStack("Burden_Dodge");
+                    (Stat)m_staminaUseModifiers.GetValue(instance).RemoveMultiplierStack("Burden_Sprint");
+                }
+                if (!character.Cheats.NotAffectedByWeightPenalties)
+                {
+                    float totalWeight = character.Inventory.TotalWeight;
+                    if (totalWeight > gameData.PouchCapacity+gameData.BackpackCapacity)
+                    {
+                        m_generalBurdenPenaltyActive.SetValue(instance, true);
+                        float num = totalWeight / gameData.PouchCapacity+gameData.BackpackCapacity;
+                        if (num != (float)m_generalBurdenRatio.GetValue(instance))
+                        {
+                            m_generalBurdenRatio.SetValue(instance,num);
+                            (Stat)moveField.GetValue(instance).AddMultiplierStack("Burden", num * -0.02f);
+                            (Stat)stamRegenField.GetValue(instance).AddMultiplierStack("Burden", num * -0.05f);
+                            (Stat)m_staminaUseModifiers.GetValue(instance).AddMultiplierStack("Burden_Dodge", num * 0.05f, TagSourceManager.Dodge);
+                            (Stat)m_staminaUseModifiers.GetValue(instance).AddMultiplierStack("Burden_Sprint", num * 0.05f, TagSourceManager.Sprint);
+                        }
+                    }
+                }
+            }
+        }
+
         public void CustomDifficultyBurntStatPatch(On.PlayerCharacterStats.orig_OnUpdateStats original, PlayerCharacterStats instance)
         {   
             if (gameData.BurntStaminaRegen != 0 || gameData.BurntHealthRegen != 0 || gameData.BurntManaRegen != 0)
             {
-                FieldInfo m_currentSpellCastType = typeof(Character).GetField("m_currentSpellCastType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                FieldInfo m_character = typeof(CharacterStats).GetField("m_character", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 Character character = (Character)m_character.GetValue(instance);
                 if(gameData.EnableSit)
                 {
@@ -169,19 +210,18 @@ namespace CustomDifficulty
 
         public void CustomDifficultyContainerPatch(On.ItemContainer.orig_OnAwake original, ItemContainer instance)
         {
-            FieldInfo baseContainerCapacity = typeof(ItemContainer).GetField("m_baseContainerCapacity", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (instance.SpecialType == ItemContainer.SpecialContainerTypes.Pouch)
             {
                 if (gameData.PouchCapacity != 0)
                 {
-                    baseContainerCapacity.SetValue(instance, (instance.ContainerCapacity + gameData.PouchCapacity));
+                    m_baseContainerCapacity.SetValue(instance, (instance.ContainerCapacity + gameData.PouchCapacity));
                 }
             }
             else
             {
                 if (gameData.BackpackCapacity != 0)
                 {
-                    baseContainerCapacity.SetValue(instance, (instance.ContainerCapacity + gameData.BackpackCapacity));
+                    m_baseContainerCapacity.SetValue(instance, (instance.ContainerCapacity + gameData.BackpackCapacity));
                 }
             }
             original.Invoke(instance);
