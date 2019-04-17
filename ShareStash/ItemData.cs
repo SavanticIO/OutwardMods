@@ -1,11 +1,24 @@
-﻿using System.Collections.Generic;
-
-namespace ShareStash
+﻿namespace ShareStash
 {
     [System.Serializable]
     public class ItemData
     {
-        public string itemID;
+        public int itemID;
         public string itemUID;
+
+        public AddItem(int ID, string UID)
+        {
+            this.itemID = ID;
+            this.itemUID = UID;
+        }
+
+        public bool ContainsItem(string UID)
+        {
+            if (UID == this.itemUID)
+            {
+                return true
+            }
+            return false
+        }
     }
 }
