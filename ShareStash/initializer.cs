@@ -3,8 +3,6 @@ using System.IO;
 using System.Reflection;
 using System.Xml.Serialization;
 using UnityEngine;
-using System.Linq;
-using Newtonsoft.Json;
 
 namespace ShareStash
 {
@@ -12,11 +10,11 @@ namespace ShareStash
     {
         public static ShareStash mod;
 
-        public Dictionary<string, string> itemList;
+        List<ItemData> itemData;
 
         public void Initialize()
         {
-            itemList = this.LoadItems();
+            itemData = this.LoadItems();
             Patch();
         }
 
@@ -32,11 +30,11 @@ namespace ShareStash
         {
             if (container.SpecialType == ItemContainer.SpecialContainerTypes.Stash)
             {
-                if (!itemList.ContainsKey(item.UID))
+                if (!itemData.ContainsItem(item.UID))
                 {
-                    itemList.Add(item.UID,item.ItemIDString);
-                    initializer.SaveItems(itemList);
-                    Debug.Log("item added" + item.ItemIDString);
+                    itemData.AddItem(item.UID);
+                    initializer.SaveItems(itemData);
+                    Debug.Log("item added" + item.UID);
                 }
             }
             original.Invoke(item, container);
@@ -46,9 +44,9 @@ namespace ShareStash
         {
             if (container.SpecialType == ItemContainer.SpecialContainerTypes.Stash && !NetworkLevelLoader.Instance.IsSceneLoading)
             {
-                itemList.Remove(item.ItemIDString);
-                initializer.SaveItems(itemList);
-                Debug.Log("item removed" + item.ItemIDString);
+                itemData.RemoveItem(item.UID);
+                initializer.SaveItems(itemData);
+                Debug.Log("item removed" + item.UID);
             }
             return original.Invoke(container, item);
         }
@@ -71,20 +69,20 @@ namespace ShareStash
                 {
                     Debug.Log("bag is null son!");
                 }
-                Debug.Log("NUmber in stash " + itemList.Count);
-                for (int i = 0; i < itemList.Count; i++)
+                Debug.Log("NUmber in stash " + itemData.itemList.Count);
+                for (int i = 0; i < itemData.itemList.Count; i++)
                 {
-                    Debug.Log("Item in container? " + container.Contains(itemList.Keys.ElementAt(i)));
-                    if (!container.Contains(itemList.Keys.ElementAt(i)))
+                    Debug.Log("Item in container? " + container.Contains(itemData.itemList[i]));
+                    if (!container.Contains(itemData.itemList[i]))
                     {
-                        Debug.Log("item add start " + itemList.Keys.ElementAt(i));
-                        Item localItem = ItemManager.Instance.GetItem(itemList.Keys.ElementAt(i));
+                        Debug.Log("item add start " + itemData.itemList[i]);
+                        Item localItem = ItemManager.Instance.GetItem(itemData.itemList[i]);
                         if(localItem == null)
                         {
                             Debug.Log("Yo local item is null! ");
                         }
                         container.AddItem(localItem);
-                        Debug.Log("item add finish " + itemList.Keys.ElementAt(i));
+                        Debug.Log("item add finish " + itemData.itemList[i]);
                     }
                 }
                 
@@ -92,30 +90,30 @@ namespace ShareStash
             original.Invoke(instance);
         }
 
-        public Dictionary<string, string> LoadItems()
+        public List<ItemData> LoadItems()
         {
             if (!File.Exists(Application.persistentDataPath + "/Stash.json"))
             {
                 StreamWriter sw = File.CreateText(Application.persistentDataPath+"/Stash.json");
                 sw.Close();
 
-                string json = "{}";
+                string json = "{\"itemList\":[]}";
                 File.WriteAllText(Application.persistentDataPath + "/Stash.json", json);
                 Debug.Log("Blank json created at "+ Application.persistentDataPath);
             }
 
             using (StreamReader streamReader = new StreamReader(Application.persistentDataPath + "/Stash.json"))
             {
-                itemList =  JsonConvert.DeserializeObject<Dictionary<string, string>>(streamReader.ReadToEnd());
-                return itemList;
+                List<ItemData> itemData = JsonUtility.FromJson<List<ItemData>>(streamReader.ReadToEnd());
+                return itemData;
             }
 
         }
 
-        public static void SaveItems(Dictionary<string, string> itemList)
+        public static void SaveItems(List<ItemData> itemData)
         {
 
-            string json = JsonConvert.SerializeObject(itemList, Formatting.Indented);
+            string json = JsonUtility.ToJson(itemData);
             File.WriteAllText(Application.persistentDataPath + "/Stash.json", json);
 
         }
