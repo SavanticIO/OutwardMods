@@ -35,6 +35,7 @@ namespace CustomDifficulty
         FieldInfo m_generalBurdenPenaltyActive = typeof(PlayerCharacterStats).GetField("m_generalBurdenPenaltyActive", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         FieldInfo m_generalBurdenRatio = typeof(PlayerCharacterStats).GetField("m_generalBurdenRatio", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         FieldInfo m_staminaUseModifiers = typeof(CharacterStats).GetField("m_staminaUseModifiers", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        FieldInfo m_stabilityRegen = typeof(CharacterStats).GetField("m_stabilityRegen", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
 
         public void Initialize()
@@ -119,22 +120,30 @@ namespace CustomDifficulty
             {
                 sleepRateField.SetValue(instance, new Stat((float)sleepRateField.GetValue(instance) - gameData.SleepDepleteRate));
             }
+            if (gameData.StabRegen != 0)
+            {
+                m_stabilityRegen.SetValue(instance, new Stat((float)m_stabilityRegen.GetValue(instance) + gameData.StabRegen));
+            }
         }
 
         public void CustomDifficultyWeightPatch(On.PlayerCharacterStats.orig_OnUpdateWeight original, PlayerCharacterStats instance)
         {   
-            Character character = (Character)m_character.GetValue(instance);
+            
             original.Invoke(instance);
             if (gameData.PouchCapacity != 0 || gameData.BackpackCapacity != 0)
-            {
+            {   
+                Character character = (Character)m_character.GetValue(instance);
+                Stat s1 = (Stat)moveField.GetValue(instance);
+                Stat s2 = (Stat)stamRegenField.GetValue(instance);
+                Stat s3 = (Stat)m_staminaUseModifiers.GetValue(instance);
                 if ((bool)m_generalBurdenPenaltyActive.GetValue(instance))
                 {
                     m_generalBurdenRatio.SetValue(instance,1f);
                     m_generalBurdenPenaltyActive.SetValue(instance, false);
-                    (Stat)moveField.GetValue(instance).RemoveMultiplierStack("Burden");
-                    (Stat)stamRegenField.GetValue(instance).RemoveMultiplierStack("Burden");
-                    (Stat)m_staminaUseModifiers.GetValue(instance).RemoveMultiplierStack("Burden_Dodge");
-                    (Stat)m_staminaUseModifiers.GetValue(instance).RemoveMultiplierStack("Burden_Sprint");
+                    s1.RemoveMultiplierStack("Burden");
+                    s2.RemoveMultiplierStack("Burden");
+                    s3.RemoveMultiplierStack("Burden_Dodge");
+                    s3.RemoveMultiplierStack("Burden_Sprint");
                 }
                 if (!character.Cheats.NotAffectedByWeightPenalties)
                 {
@@ -146,13 +155,16 @@ namespace CustomDifficulty
                         if (num != (float)m_generalBurdenRatio.GetValue(instance))
                         {
                             m_generalBurdenRatio.SetValue(instance,num);
-                            (Stat)moveField.GetValue(instance).AddMultiplierStack("Burden", num * -0.02f);
-                            (Stat)stamRegenField.GetValue(instance).AddMultiplierStack("Burden", num * -0.05f);
-                            (Stat)m_staminaUseModifiers.GetValue(instance).AddMultiplierStack("Burden_Dodge", num * 0.05f, TagSourceManager.Dodge);
-                            (Stat)m_staminaUseModifiers.GetValue(instance).AddMultiplierStack("Burden_Sprint", num * 0.05f, TagSourceManager.Sprint);
+                            s1.AddMultiplierStack("Burden", num * -0.02f);
+                            s2.AddMultiplierStack("Burden", num * -0.05f);
+                            s3.AddMultiplierStack("Burden_Dodge", num * 0.05f, TagSourceManager.Dodge);
+                            s3.AddMultiplierStack("Burden_Sprint", num * 0.05f, TagSourceManager.Sprint);
                         }
                     }
                 }
+                moveField.SetValue(instance,s1);
+                stamRegenField.SetValue(instance,s2);
+                m_staminaUseModifiers.SetValue(instance,s3);
             }
         }
 
@@ -161,7 +173,7 @@ namespace CustomDifficulty
             if (gameData.BurntStaminaRegen != 0 || gameData.BurntHealthRegen != 0 || gameData.BurntManaRegen != 0)
             {
                 Character character = (Character)m_character.GetValue(instance);
-                if(gameData.EnableSit)
+                if(gameData.EnableBurntRegenSit)
                 {
                     if((Character.SpellCastType)m_currentSpellCastType.GetValue(character) == Character.SpellCastType.Sit)
                     {

@@ -14,7 +14,9 @@
   "BurntStaminaRegen": 0,
   "BurntHealthRegen": 0,
   "BurntManaRegen": 0,
-  "ManaHealthReduction": 5,
-  "ManaStaminaReduction": 5,
-  "ManaAugment": 20
+  "ManaHealthReduction": 0,
+  "ManaStaminaReduction": 0,
+  "ManaAugment": 0,
+  "EnableBurntRegenSit": false,
+  "StabRegen": 0
 }

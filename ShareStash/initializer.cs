@@ -58,8 +58,10 @@ namespace ShareStash
         }
 
         public bool ShareStashRemoveItemPatch(On.ItemContainer.orig_RemoveItem original, ItemContainer container, Item item)
-        {
-            if (container.SpecialType == ItemContainer.SpecialContainerTypes.Stash && !NetworkLevelLoader.Instance.IsSceneLoading)
+        {   
+            FieldInfo m_interactionTrigger = typeof(InteractionOpenContainer).GetField("m_interactionTrigger", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            InteractionOpenContainer interactionTrigger = (InteractionOpenContainer)m_interactionTrigger.GetValue(instance);
+            if (container.SpecialType == ItemContainer.SpecialContainerTypes.Stash && !NetworkLevelLoader.Instance.IsSceneLoading and !interactionTrigger.IsBusy )
             {
                 Debug.Log("remove item used");
                 if (itemData.itemList.Contains(item.ItemID + ":" + item.UID))
@@ -78,7 +80,7 @@ namespace ShareStash
             ItemContainer container = (ItemContainer)m_container.GetValue(instance);
             if (container.SpecialType == ItemContainer.SpecialContainerTypes.Stash)
             {
-                Debug.Log("NUmber in stash " + itemData.itemList.Count);
+                container.ClearPouch();
                 for (int i = 0; i < itemData.itemList.Count; i++)
                 {
                     string localitemID = itemData.itemList[i].Substring(0, itemData.itemList[i].IndexOf(":"));
@@ -99,6 +101,7 @@ namespace ShareStash
                         Debug.Log("item add finish " + localitemUID);
                     }
                 }
+                m_container.SetValue(instance,container);
             }
             original.Invoke(instance);
         }
