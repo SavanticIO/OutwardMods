@@ -1,7 +1,6 @@
 ﻿using Partiality.Modloader;
 using UnityEngine;
 
-
 namespace ShareStash
 {
     public class ShareStash : PartialityMod

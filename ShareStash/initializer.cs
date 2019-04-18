@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Xml.Serialization;
 using UnityEngine;
 
 namespace ShareStash
@@ -10,7 +10,7 @@ namespace ShareStash
     {
         public static ShareStash mod;
 
-        List<ItemData> itemData;
+        ContainerData itemData;
 
         public void Initialize()
         {
@@ -20,42 +20,53 @@ namespace ShareStash
 
         public void Patch()
         {
-            On.ItemContainer.AddItem += new On.Item.hook_AddItem(this.ShareStashAddItemPatch);
+            On.ItemContainer.AddItem += new On.ItemContainer.hook_AddItem(this.ShareStashAddItemPatch);
+            On.Item.Store += new On.Item.hook_Store(this.ShareStashStorePatch);
             On.ItemContainer.RemoveItem += new On.ItemContainer.hook_RemoveItem(this.ShareStashRemoveItemPatch);
             On.InteractionOpenContainer.OnActivationDone += new On.InteractionOpenContainer.hook_OnActivationDone(this.ShareStashOnActivationDonePatch);
         }
 
-        public void ShareStashAddItemPatch(On.Item.orig_AddItem original, ItemContainer container, Item item)
+        public bool ShareStashAddItemPatch(On.ItemContainer.orig_AddItem original, ItemContainer container, Item item)
         {
             if (container.SpecialType == ItemContainer.SpecialContainerTypes.Stash)
-            {   
-                for (int i = 0; i < itemData.Count; i++)
+            {
+                if (!itemData.itemList.Contains(item.ItemID+":"+item.UID))
                 {
-                    if (!itemData[i].ContainsItem(item.UID))
-                    {   
-                        ItemData localitemData = new ItemData();
-                        localitemData.AddItem(item.ItemID,item.UID);
-                        itemData.Add(localitemData);
-                        initializer.SaveItems(itemData);
-                        Debug.Log("item added" + item.UID);
-                    }
+                    string localitemData = item.ItemID + ":" + item.UID;
+                    itemData.itemList.Add(localitemData);
+                    initializer.SaveItems(itemData);
+                    Debug.Log("item added" + item.UID);
                 }
             }
-            original.Invoke(container, item);
+            return original.Invoke(container, item);
+        }
+
+        public void ShareStashStorePatch(On.Item.orig_Store original, Item item, ItemContainer container)
+        {
+            if (container.SpecialType == ItemContainer.SpecialContainerTypes.Stash)
+            {
+                Debug.Log("item store used");
+                if (!itemData.itemList.Contains(item.ItemID + ":" + item.UID))
+                {
+                    string localitemData = item.ItemID + ":" + item.UID;
+                    itemData.itemList.Add(localitemData);
+                    initializer.SaveItems(itemData);
+                    Debug.Log("item added" + item.UID);
+                }
+            }
+            original.Invoke(item,container);
         }
 
         public bool ShareStashRemoveItemPatch(On.ItemContainer.orig_RemoveItem original, ItemContainer container, Item item)
         {
             if (container.SpecialType == ItemContainer.SpecialContainerTypes.Stash && !NetworkLevelLoader.Instance.IsSceneLoading)
-            {   
-                for (int i = 0; i < itemData.Count; i++)
-                {   
-                    if (itemData[i].ContainsItem(item.UID))
-                    {
-                        itemData.RemoveAt(i);
-                        initializer.SaveItems(itemData);
-                        Debug.Log("item removed" + item.UID);
-                    }
+            {
+                Debug.Log("remove item used");
+                if (itemData.itemList.Contains(item.ItemID + ":" + item.UID))
+                {
+                    itemData.itemList.Remove(item.ItemID + ":" + item.UID);
+                    initializer.SaveItems(itemData);
+                    Debug.Log("item removed" + item.UID);
                 }
             }
             return original.Invoke(container, item);
@@ -67,47 +78,51 @@ namespace ShareStash
             ItemContainer container = (ItemContainer)m_container.GetValue(instance);
             if (container.SpecialType == ItemContainer.SpecialContainerTypes.Stash)
             {
-                Debug.Log("NUmber in stash " + itemData.Count);
-                for (int i = 0; i < itemData.Count; i++)
+                Debug.Log("NUmber in stash " + itemData.itemList.Count);
+                for (int i = 0; i < itemData.itemList.Count; i++)
                 {
-                    Debug.Log("Item in container? " + container.Contains(itemData[i].itemUID));
-                    if (!container.Contains(itemData[i].itemUID))
+                    string localitemID = itemData.itemList[i].Substring(0, itemData.itemList[i].IndexOf(":"));
+                    string localitemUID = itemData.itemList[i].Substring(itemData.itemList[i].IndexOf(":") + 1);
+                    Debug.Log("Item in container? " + container.Contains(localitemUID));
+                    if (!container.Contains(localitemUID))
                     {
-                        Debug.Log("item add start " + itemData[i].itemUID);
-                        Item localItem = ItemManager.Instance.GenerateItem(itemData[i].itemID);
-                        if(localItem == null)
+                        Debug.Log("item add start " + localitemUID);
+                        Item localItem = ItemManager.Instance.GetItem(localitemUID);
+                        if (localItem == null)
                         {
-                            Debug.Log("Yo local item is null! ");
+                            localItem = ItemManager.Instance.GenerateItem(Int32.Parse(localitemID));
+                            ItemManager.Instance.RequestItemInitialization(localItem);
+                            ItemManager.Instance.ItemHasBeenAdded(ref localItem);
                         }
-                        itemData.RemoveAt(i)
+                        itemData.itemList.RemoveAt(i);
                         container.AddItem(localItem);
-                        Debug.Log("item add finish " + itemData[i].itemUID);
+                        Debug.Log("item add finish " + localitemUID);
                     }
                 }
             }
             original.Invoke(instance);
         }
 
-        public List<ItemData> LoadItems()
+        public ContainerData LoadItems()
         {
             if (!File.Exists(Application.persistentDataPath + "/Stash.json"))
             {
                 StreamWriter sw = File.CreateText(Application.persistentDataPath+"/Stash.json");
                 sw.Close();
 
-                string json = "";
+                string json = "{\"itemList\":[]}";
                 File.WriteAllText(Application.persistentDataPath + "/Stash.json", json);
                 Debug.Log("Blank json created at "+ Application.persistentDataPath);
             }
 
             using (StreamReader streamReader = new StreamReader(Application.persistentDataPath + "/Stash.json"))
             {
-                List<ItemData> itemData = JsonUtility.FromJson<List<ItemData>>(streamReader.ReadToEnd());
+                ContainerData itemData = JsonUtility.FromJson<ContainerData>(streamReader.ReadToEnd());
                 return itemData;
             }
         }
 
-        public static void SaveItems(List<ItemData> itemData)
+        public static void SaveItems(ContainerData itemData)
         {
             string json = JsonUtility.ToJson(itemData);
             File.WriteAllText(Application.persistentDataPath + "/Stash.json", json);
