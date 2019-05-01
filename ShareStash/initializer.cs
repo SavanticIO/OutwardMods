@@ -20,25 +20,9 @@ namespace ShareStash
 
         public void Patch()
         {
-            On.ItemContainer.AddItem += new On.ItemContainer.hook_AddItem(this.ShareStashAddItemPatch);
             On.Item.Store += new On.Item.hook_Store(this.ShareStashStorePatch);
             On.ItemContainer.RemoveItem += new On.ItemContainer.hook_RemoveItem(this.ShareStashRemoveItemPatch);
             On.InteractionOpenContainer.OnActivationDone += new On.InteractionOpenContainer.hook_OnActivationDone(this.ShareStashOnActivationDonePatch);
-        }
-
-        public bool ShareStashAddItemPatch(On.ItemContainer.orig_AddItem original, ItemContainer container, Item item)
-        {
-            if (container.SpecialType == ItemContainer.SpecialContainerTypes.Stash)
-            {
-                if (!itemData.itemList.Contains(item.ItemID+":"+item.UID))
-                {
-                    string localitemData = item.ItemID + ":" + item.UID;
-                    itemData.itemList.Add(localitemData);
-                    initializer.SaveItems(itemData);
-                    Debug.Log("item added" + item.UID);
-                }
-            }
-            return original.Invoke(container, item);
         }
 
         public void ShareStashStorePatch(On.Item.orig_Store original, Item item, ItemContainer container)
@@ -92,12 +76,11 @@ namespace ShareStash
                         Item localItem = ItemManager.Instance.GetItem(localitemUID);
                         if (localItem == null)
                         {
-                            localItem = ItemManager.Instance.GenerateItem(Int32.Parse(localitemID));
-                            ItemManager.Instance.RequestItemInitialization(localItem);
-                            ItemManager.Instance.ItemHasBeenAdded(ref localItem);
+                            localItem = ItemManager.Instance.GenerateItemNetwork(Int32.Parse(localitemID));
                         }
                         itemData.itemList.RemoveAt(i);
-                        container.AddItem(localItem);
+                        localItem.Store(container);
+                        localItem.ChangeParent(container.transform);
                         Debug.Log("item add finish " + localitemUID);
                     }
                 }
