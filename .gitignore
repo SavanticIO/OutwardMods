@@ -335,3 +335,7 @@ ASALocalRun/
 
 #Visual Studio Code folder
 .vscode/
+
+#Visual Studio project files
+/Mediation/Mediation.sln
+/Mediation/Properties/AssemblyInfo.cs
