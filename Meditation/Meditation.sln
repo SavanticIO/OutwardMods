@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2036
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meditation", "Meditation.csproj", "{043BE00C-CA85-4744-9913-C3C20606A65A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{043BE00C-CA85-4744-9913-C3C20606A65A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{043BE00C-CA85-4744-9913-C3C20606A65A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{043BE00C-CA85-4744-9913-C3C20606A65A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{043BE00C-CA85-4744-9913-C3C20606A65A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C91C1707-67F0-451C-922B-ED33CD650521}
+	EndGlobalSection
+EndGlobal
