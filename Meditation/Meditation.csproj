@@ -12,7 +12,6 @@
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -34,19 +33,15 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>G:\Program Files (x86)\EpicGames\Outward\Outward_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="HOOKS-Assembly-CSharp">
       <HintPath>G:\Program Files (x86)\EpicGames\Outward\Outward_Data\Managed\HOOKS-Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="MonoMod">
       <HintPath>G:\partiality\bin\MonoMod.exe</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="Partiality">
       <HintPath>G:\partiality\Partiality.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -56,7 +51,6 @@
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Program Files (x86)\EpicGames\Outward\Outward_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
