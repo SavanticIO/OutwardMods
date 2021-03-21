@@ -4,15 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{043BE00C-CA85-4744-9913-C3C20606A65A}</ProjectGuid>
+    <ProjectGuid>{314DE90D-8ADF-40A0-94AA-C04E9A474E25}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Meditation</RootNamespace>
-    <AssemblyName>Meditation</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <RootNamespace>Meditaion</RootNamespace>
+    <AssemblyName>Meditaion</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,36 +31,37 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>G:\Program Files (x86)\Steam\steamapps\common\Outward\BepInEx\core\0Harmony.dll</HintPath>
+    </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>G:\Program Files (x86)\EpicGames\Outward\Outward_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>G:\Program Files (x86)\Steam\steamapps\common\Outward\Outward_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="HOOKS-Assembly-CSharp">
-      <HintPath>G:\Program Files (x86)\EpicGames\Outward\Outward_Data\Managed\HOOKS-Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>G:\Program Files (x86)\Steam\steamapps\common\Outward\Outward_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
-    <Reference Include="MonoMod">
-      <HintPath>G:\partiality\bin\MonoMod.exe</HintPath>
-      <Private>False</Private>
+    <Reference Include="BepInEx">
+      <HintPath>G:\Program Files (x86)\Steam\steamapps\common\Outward\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
-    <Reference Include="Partiality">
-      <HintPath>G:\partiality\Partiality.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="BepInEx.Harmony">
+      <HintPath>G:\Program Files (x86)\Steam\steamapps\common\Outward\BepInEx\core\BepInEx.Harmony.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>G:\Program Files (x86)\EpicGames\Outward\Outward_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>G:\Program Files (x86)\Steam\steamapps\common\Outward\Outward_Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>G:\Program Files (x86)\Steam\steamapps\common\Outward\Outward_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GameData.cs" />
-    <Compile Include="initializer.cs" />
     <Compile Include="Meditation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
