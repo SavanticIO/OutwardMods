@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Meditation
 {
-    [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.0.1")]
+    [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.2")]
     public class Meditation : BaseUnityPlugin
     {
         public static ConfigEntry<float> BurntStaminaRegen;
