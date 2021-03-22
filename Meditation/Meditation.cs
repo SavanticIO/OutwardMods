@@ -1,13 +1,12 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
-using BepInEx.Logging;
 using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
 
 namespace Meditation
 {
-    [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.0")]
+    [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.0.1")]
     public class Meditation : BaseUnityPlugin
     {
         public static ConfigEntry<float> BurntStaminaRegen;
@@ -64,7 +63,6 @@ namespace Meditation
     {
         static bool Prefix(PlayerCharacterStats __instance)
         {
-            var myLogSource = BepInEx.Logging.Logger.CreateLogSource("Meditation");
 
             // Character reference.
             FieldInfo m_character = typeof(CharacterStats).GetField("m_character", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -85,26 +83,19 @@ namespace Meditation
             Character character = (Character)m_character.GetValue(__instance);
             if (character.CurrentSpellCast == Character.SpellCastType.Sit)
             {
-                myLogSource.LogInfo(burntRegenEnabled);
-                myLogSource.LogInfo(currentRegenEnabled);
                 if (burntRegenEnabled)
                 {
                     if (Meditation.BurntStaminaRegen.Value != 0)
                     {
                         burntStamField.SetValue(__instance, Mathf.Clamp((float)burntStamField.GetValue(__instance) - Meditation.BurntStaminaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxStamina * 0.9f));
-                        myLogSource.LogInfo("BurntStam: " + Meditation.BurntStaminaRegen.Value);
-                        myLogSource.LogInfo("BurntStam: " + Meditation.BurntStaminaRegen.Value * UpdateDeltaTime(__instance));
-                        myLogSource.LogInfo("BurntStam: "+Mathf.Clamp((float)burntStamField.GetValue(__instance) - Meditation.BurntStaminaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxStamina * 0.9f));
                     }
                     if (Meditation.BurntHealthRegen.Value != 0)
                     {
                         burntHealthField.SetValue(__instance, Mathf.Clamp((float)burntHealthField.GetValue(__instance) - Meditation.BurntHealthRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxHealth * 0.9f));
-                        myLogSource.LogInfo(Mathf.Clamp((float)burntHealthField.GetValue(__instance) - Meditation.BurntHealthRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxHealth * 0.9f));
                     }
                     if (Meditation.BurntManaRegen.Value != 0)
                     {
                         burntManaField.SetValue(__instance, Mathf.Clamp((float)burntManaField.GetValue(__instance) - Meditation.BurntManaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxMana * 0.5f));
-                        myLogSource.LogInfo(Mathf.Clamp((float)burntManaField.GetValue(__instance) - Meditation.BurntManaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxMana * 0.5f));
                     }
                 }
                 if (currentRegenEnabled)
@@ -112,21 +103,17 @@ namespace Meditation
                     if (Meditation.CurrentStaminaRegen.Value != 0)
                     {
                         curStamField.SetValue(__instance, Mathf.Clamp((float)curStamField.GetValue(__instance) + Meditation.CurrentStaminaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxStamina));
-                        myLogSource.LogInfo(Mathf.Clamp((float)curStamField.GetValue(__instance) + Meditation.CurrentStaminaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxStamina));
                     }
                     if (Meditation.CurrentHealthRegen.Value != 0)
                     {
                         curHealthField.SetValue(__instance, Mathf.Clamp((float)curHealthField.GetValue(__instance) + Meditation.CurrentHealthRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxHealth));
-                        myLogSource.LogInfo(Mathf.Clamp((float)curHealthField.GetValue(__instance) + Meditation.CurrentHealthRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxHealth));
                     }
                     if (Meditation.CurrentManaRegen.Value != 0)
                     {
                         curManaField.SetValue(__instance, Mathf.Clamp((float)curManaField.GetValue(__instance) + Meditation.CurrentManaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxMana));
-                        myLogSource.LogInfo(Mathf.Clamp((float)curManaField.GetValue(__instance) + Meditation.CurrentManaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxMana));
                     }
                 }
             }
-            BepInEx.Logging.Logger.Sources.Remove(myLogSource);
             return true;
         }
 
