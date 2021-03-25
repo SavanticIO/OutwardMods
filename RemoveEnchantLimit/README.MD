@@ -10,4 +10,4 @@ All enchantment effects should display in the details page but currently they al
 
 I've only really done a minimal amount of testing to confirm basic functionality so consider this to be beta/wip for the time being.
 
-Link to the nexus page for the mod https://www.nexusmods.com/outward/mods/40
+Link to the nexus page for the mod https://www.nexusmods.com/outward/mods/206/
