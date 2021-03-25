@@ -9,6 +9,8 @@ namespace Meditation
     [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.2")]
     public class Meditation : BaseUnityPlugin
     {
+        public static ConfigEntry<bool> EnableBurntSitRegen;
+        public static ConfigEntry<bool> EnableCurrentSitRegen;
         public static ConfigEntry<float> BurntStaminaRegen;
         public static ConfigEntry<float> BurntHealthRegen;
         public static ConfigEntry<float> BurntManaRegen;
@@ -19,6 +21,14 @@ namespace Meditation
         public static ConfigEntry<KeyboardShortcut> SitKey;
         void Awake()
         {
+            EnableBurntSitRegen = Config.Bind("General",
+                                     "EnableBurntSitRegen",
+                                     true,
+                                     "Enable or disable the regeneration of burnt stats while sitting");
+            EnableCurrentSitRegen = Config.Bind("General",
+                                     "EnableCurrentSitRegen",
+                                     true,
+                                     "Enable or disable the regeneration of current(non-burnt) stats while sitting");
             BurntStaminaRegen = Config.Bind("General",
                                      "BurntStaminaRegen",
                                      0.5f,
@@ -63,66 +73,45 @@ namespace Meditation
     {
         static bool Prefix(PlayerCharacterStats __instance)
         {
-
-            // Character reference.
-            FieldInfo m_character = typeof(CharacterStats).GetField("m_character", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            // Burnt stats current values.
-            FieldInfo burntStamField = typeof(CharacterStats).GetField("m_burntStamina", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            FieldInfo burntHealthField = typeof(CharacterStats).GetField("m_burntHealth", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            FieldInfo burntManaField = typeof(CharacterStats).GetField("m_burntMana", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            // Rate of current value regeneration.
-            FieldInfo curStamField = typeof(CharacterStats).GetField("m_stamina", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            FieldInfo curHealthField = typeof(CharacterStats).GetField("m_health", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            FieldInfo curManaField = typeof(CharacterStats).GetField("m_mana", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            bool burntRegenEnabled = Meditation.BurntStaminaRegen.Value != 0 || Meditation.BurntHealthRegen.Value != 0 || Meditation.BurntManaRegen.Value != 0;
-            bool currentRegenEnabled = Meditation.CurrentStaminaRegen.Value != 0 || Meditation.CurrentHealthRegen.Value != 0 || Meditation.CurrentManaRegen.Value != 0;
+            FieldInfo m_character = typeof(CharacterStats).GetField("m_character", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);        
 
             Character character = (Character)m_character.GetValue(__instance);
             if (character.CurrentSpellCast == Character.SpellCastType.Sit)
             {
-                if (burntRegenEnabled)
-                {
-                    if (Meditation.BurntStaminaRegen.Value != 0)
-                    {
-                        burntStamField.SetValue(__instance, Mathf.Clamp((float)burntStamField.GetValue(__instance) - Meditation.BurntStaminaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxStamina * 0.9f));
-                    }
-                    if (Meditation.BurntHealthRegen.Value != 0)
-                    {
-                        burntHealthField.SetValue(__instance, Mathf.Clamp((float)burntHealthField.GetValue(__instance) - Meditation.BurntHealthRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxHealth * 0.9f));
-                    }
-                    if (Meditation.BurntManaRegen.Value != 0)
-                    {
-                        burntManaField.SetValue(__instance, Mathf.Clamp((float)burntManaField.GetValue(__instance) - Meditation.BurntManaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxMana * 0.5f));
-                    }
-                }
-                if (currentRegenEnabled)
-                {
-                    if (Meditation.CurrentStaminaRegen.Value != 0)
-                    {
-                        curStamField.SetValue(__instance, Mathf.Clamp((float)curStamField.GetValue(__instance) + Meditation.CurrentStaminaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxStamina));
-                    }
-                    if (Meditation.CurrentHealthRegen.Value != 0)
-                    {
-                        curHealthField.SetValue(__instance, Mathf.Clamp((float)curHealthField.GetValue(__instance) + Meditation.CurrentHealthRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxHealth));
-                    }
-                    if (Meditation.CurrentManaRegen.Value != 0)
-                    {
-                        curManaField.SetValue(__instance, Mathf.Clamp((float)curManaField.GetValue(__instance) + Meditation.CurrentManaRegen.Value * UpdateDeltaTime(__instance), 0f, __instance.ActiveMaxMana));
-                    }
-                }
+                ApplySittingRegen(__instance);
             }
             return true;
         }
 
+        private static void ApplySittingRegen(PlayerCharacterStats instance)
+        {
+            if (Meditation.EnableBurntSitRegen.Value)
+            {
+                UpdateStats(instance, "m_burntStamina", Meditation.BurntStaminaRegen.Value, instance.ActiveMaxStamina, 0.9f);
+                UpdateStats(instance, "m_burntHealth", Meditation.BurntHealthRegen.Value, instance.ActiveMaxHealth, 0.9f);
+                UpdateStats(instance, "m_burntMana", Meditation.BurntManaRegen.Value, instance.ActiveMaxMana, 0.5f);
+            }
+            if (Meditation.EnableCurrentSitRegen.Value)
+            {
+                UpdateStats(instance, "m_stamina", Meditation.CurrentStaminaRegen.Value, instance.ActiveMaxStamina, 1.0f);
+                UpdateStats(instance, "m_health", Meditation.CurrentHealthRegen.Value, instance.ActiveMaxHealth, 1.0f);
+                UpdateStats(instance, "m_mana", Meditation.CurrentManaRegen.Value, instance.ActiveMaxMana, 1.0f);
+            }                   
+        }
+
+        private static void UpdateStats(PlayerCharacterStats instance, string fieldName, float configValue, float maxValue, float modifier)
+        {
+            FieldInfo field = typeof(CharacterStats).GetField(fieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (configValue != 0)
+            {
+                field.SetValue(instance, Mathf.Clamp((float)field.GetValue(instance) - configValue * UpdateDeltaTime(instance), 0f, maxValue * modifier));
+            }
+        }
+
         public static float UpdateDeltaTime(PlayerCharacterStats instance)
         {
-            // Point in time that this class was initialised.
             FieldInfo m_lastUpdateTime = typeof(CharacterStats).GetField("m_lastUpdateTime", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-            // If the game is paused, return 0, otherwise return the difference between now and the last update time.
             return ((float)m_lastUpdateTime.GetValue(instance) == -999f) ? 0f : (Time.time - (float)m_lastUpdateTime.GetValue(instance));
         }
     }
@@ -132,18 +121,14 @@ namespace Meditation
     {
         static void Postfix(LocalCharacterControl __instance)
         {
-            if (Meditation.EnableSitting.Value)
+            if (__instance.InputLocked)
             {
-                if (__instance.InputLocked)
-                {
-                    return;
-                }
-                if (Meditation.SitKey.Value.IsDown())
-                {
-                    __instance.Character.CastSpell(Character.SpellCastType.Sit, __instance.Character.gameObject, Character.SpellCastModifier.Immobilized, 1, -1f);
-                }
+                return;
+            }
+            if (Meditation.EnableSitting.Value && Meditation.SitKey.Value.IsDown())
+            {
+                __instance.Character.CastSpell(Character.SpellCastType.Sit, __instance.Character.gameObject, Character.SpellCastModifier.Immobilized, 1, -1f);
             }
         }
-
     }
 }
