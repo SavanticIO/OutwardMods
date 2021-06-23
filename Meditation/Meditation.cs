@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Meditation
 {
-    [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.2")]
+    [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.3")]
     public class Meditation : BaseUnityPlugin
     {
         public static ConfigEntry<bool> EnableBurntSitRegen;
@@ -21,43 +21,43 @@ namespace Meditation
         public static ConfigEntry<KeyboardShortcut> SitKey;
         void Awake()
         {
-            EnableBurntSitRegen = Config.Bind("General",
+            EnableBurntSitRegen = Config.Bind("Burnt Stat Regen",
                                      "EnableBurntSitRegen",
                                      true,
                                      "Enable or disable the regeneration of burnt stats while sitting");
-            EnableCurrentSitRegen = Config.Bind("General",
+            EnableCurrentSitRegen = Config.Bind("Current Stat Regen",
                                      "EnableCurrentSitRegen",
                                      true,
                                      "Enable or disable the regeneration of current(non-burnt) stats while sitting");
-            BurntStaminaRegen = Config.Bind("General",
+            BurntStaminaRegen = Config.Bind("Burnt Stat Regen",
                                      "BurntStaminaRegen",
                                      0.5f,
                                      "How quickly burnt stamina will regen while siting. Default: 0.5f");
-            BurntHealthRegen = Config.Bind("General",
+            BurntHealthRegen = Config.Bind("Burnt Stat Regen",
                                      "BurntHealthRegen",
                                      0.5f,
                                      "How quickly burnt health will regen while siting. Default: 0.5f");
-            BurntManaRegen = Config.Bind("General",
+            BurntManaRegen = Config.Bind("Burnt Stat Regen",
                                      "BurntManaRegen",
                                      0.5f,
                                      "How quickly burnt Mana will regen while siting. Default: 0.5f");
-            CurrentStaminaRegen = Config.Bind("General",
+            CurrentStaminaRegen = Config.Bind("Current Stat Regen",
                                      "CurrentStaminaRegen",
                                      1.0f,
                                      "How quickly stamina will regen while siting. Default: 1.0f");
-            CurrentHealthRegen = Config.Bind("General",
+            CurrentHealthRegen = Config.Bind("Current Stat Regen",
                                      "CurrentHealthRegen",
                                      1.0f,
                                      "How quickly health will regen while siting. Default: 1.0f");
-            CurrentManaRegen = Config.Bind("General",
+            CurrentManaRegen = Config.Bind("Current Stat Regen",
                                      "CurrentManaRegen",
                                      1.0f,
                                      "How quickly mana will regen while siting. Default: 1.0f");
-            EnableSitting = Config.Bind("General",
+            EnableSitting = Config.Bind("Sitting",
                                      "EnableSitting",
                                      true,
                                      "Ability to toggle sitting from this mod if you prefer another mods implimentation. Default: true");
-            SitKey = Config.Bind("General",
+            SitKey = Config.Bind("Sitting",
                                      "SitKey",
                                      new KeyboardShortcut(KeyCode.X),
                                      "Keyboard shortcut for the sitting action. Default: X");
@@ -87,24 +87,43 @@ namespace Meditation
         {
             if (Meditation.EnableBurntSitRegen.Value)
             {
-                UpdateStats(instance, "m_burntStamina", Meditation.BurntStaminaRegen.Value, instance.ActiveMaxStamina, 0.9f);
-                UpdateStats(instance, "m_burntHealth", Meditation.BurntHealthRegen.Value, instance.ActiveMaxHealth, 0.9f);
-                UpdateStats(instance, "m_burntMana", Meditation.BurntManaRegen.Value, instance.ActiveMaxMana, 0.5f);
+                UpdateStats(instance, "m_burntStamina", Meditation.BurntStaminaRegen.Value, instance.MaxStamina, "BURNT");
+                UpdateStats(instance, "m_burntHealth", Meditation.BurntHealthRegen.Value, instance.MaxHealth, "BURNT");
+                UpdateStats(instance, "m_burntMana", Meditation.BurntManaRegen.Value, instance.MaxMana, "BURNT");
             }
             if (Meditation.EnableCurrentSitRegen.Value)
             {
-                UpdateStats(instance, "m_stamina", Meditation.CurrentStaminaRegen.Value, instance.ActiveMaxStamina, 1.0f);
-                UpdateStats(instance, "m_health", Meditation.CurrentHealthRegen.Value, instance.ActiveMaxHealth, 1.0f);
-                UpdateStats(instance, "m_mana", Meditation.CurrentManaRegen.Value, instance.ActiveMaxMana, 1.0f);
+                UpdateStats(instance, "m_stamina", Meditation.CurrentStaminaRegen.Value, instance.ActiveMaxStamina, "CURRENT");
+                UpdateStats(instance, "m_health", Meditation.CurrentHealthRegen.Value, instance.ActiveMaxHealth, "CURRENT");
+                UpdateStats(instance, "m_mana", Meditation.CurrentManaRegen.Value, instance.ActiveMaxMana, "CURRENT");
             }                   
         }
 
-        private static void UpdateStats(PlayerCharacterStats instance, string fieldName, float configValue, float maxValue, float modifier)
+        private static float GetUpdateValue(PlayerCharacterStats instance, FieldInfo field, float configValue, string statType)
+        {
+            float value;
+            switch (statType)
+            {
+                case "CURRENT":
+                    value = configValue;
+                    break;
+                case "BURNT":
+                    value = -configValue;
+                    break;
+                default:
+                    value = 0.0f;
+                    break;
+            }
+            return (float)field.GetValue(instance) + value * UpdateDeltaTime(instance);
+        }
+
+        private static void UpdateStats(PlayerCharacterStats instance, string fieldName, float configValue, float maxValue, string statType)
         {
             FieldInfo field = typeof(CharacterStats).GetField(fieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (configValue != 0)
             {
-                field.SetValue(instance, Mathf.Clamp((float)field.GetValue(instance) - configValue * UpdateDeltaTime(instance), 0f, maxValue * modifier));
+                float updateValue = GetUpdateValue(instance, field, configValue, statType);
+                field.SetValue(instance, Mathf.Clamp(updateValue, 0f, maxValue));
             }
         }
 
