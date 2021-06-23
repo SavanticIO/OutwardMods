@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Meditation
 {
-    [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.3")]
+    [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.4")]
     public class Meditation : BaseUnityPlugin
     {
         public static ConfigEntry<bool> EnableBurntSitRegen;
@@ -87,42 +87,23 @@ namespace Meditation
         {
             if (Meditation.EnableBurntSitRegen.Value)
             {
-                UpdateStats(instance, "m_burntStamina", Meditation.BurntStaminaRegen.Value, instance.MaxStamina, "BURNT");
-                UpdateStats(instance, "m_burntHealth", Meditation.BurntHealthRegen.Value, instance.MaxHealth, "BURNT");
-                UpdateStats(instance, "m_burntMana", Meditation.BurntManaRegen.Value, instance.MaxMana, "BURNT");
+                UpdateStats(instance, "m_burntStamina", -Meditation.BurntStaminaRegen.Value, instance.MaxStamina);
+                UpdateStats(instance, "m_burntHealth", -Meditation.BurntHealthRegen.Value, instance.MaxHealth);
+                UpdateStats(instance, "m_burntMana", -Meditation.BurntManaRegen.Value, instance.MaxMana);
             }
             if (Meditation.EnableCurrentSitRegen.Value)
             {
-                UpdateStats(instance, "m_stamina", Meditation.CurrentStaminaRegen.Value, instance.ActiveMaxStamina, "CURRENT");
-                UpdateStats(instance, "m_health", Meditation.CurrentHealthRegen.Value, instance.ActiveMaxHealth, "CURRENT");
-                UpdateStats(instance, "m_mana", Meditation.CurrentManaRegen.Value, instance.ActiveMaxMana, "CURRENT");
+                UpdateStats(instance, "m_stamina", Meditation.CurrentStaminaRegen.Value, instance.ActiveMaxStamina);
+                UpdateStats(instance, "m_health", Meditation.CurrentHealthRegen.Value, instance.ActiveMaxHealth);
+                UpdateStats(instance, "m_mana", Meditation.CurrentManaRegen.Value, instance.ActiveMaxMana);
             }                   
         }
-
-        private static float GetUpdateValue(PlayerCharacterStats instance, FieldInfo field, float configValue, string statType)
-        {
-            float value;
-            switch (statType)
-            {
-                case "CURRENT":
-                    value = configValue;
-                    break;
-                case "BURNT":
-                    value = -configValue;
-                    break;
-                default:
-                    value = 0.0f;
-                    break;
-            }
-            return (float)field.GetValue(instance) + value * UpdateDeltaTime(instance);
-        }
-
-        private static void UpdateStats(PlayerCharacterStats instance, string fieldName, float configValue, float maxValue, string statType)
+        private static void UpdateStats(PlayerCharacterStats instance, string fieldName, float configValue, float maxValue)
         {
             FieldInfo field = typeof(CharacterStats).GetField(fieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (configValue != 0)
             {
-                float updateValue = GetUpdateValue(instance, field, configValue, statType);
+                float updateValue = (float)field.GetValue(instance) + configValue * UpdateDeltaTime(instance);
                 field.SetValue(instance, Mathf.Clamp(updateValue, 0f, maxValue));
             }
         }
