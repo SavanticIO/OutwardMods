@@ -6,9 +6,11 @@ using UnityEngine;
 
 namespace Meditation
 {
-    [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.2")]
+    [BepInPlugin(ID, "Meditation", "2.0.2")]
     public class Meditation : BaseUnityPlugin
     {
+        const string ID = "sco.savantic.meditation";
+
         public static ConfigEntry<bool> EnableBurntSitRegen;
         public static ConfigEntry<bool> EnableCurrentSitRegen;
         public static ConfigEntry<float> BurntStaminaRegen;
@@ -19,6 +21,7 @@ namespace Meditation
         public static ConfigEntry<float> CurrentManaRegen;
         public static ConfigEntry<bool> EnableSitting;
         public static ConfigEntry<KeyboardShortcut> SitKey;
+
         void Awake()
         {
             EnableBurntSitRegen = Config.Bind("General",
@@ -61,10 +64,8 @@ namespace Meditation
                                      "SitKey",
                                      new KeyboardShortcut(KeyCode.X),
                                      "Keyboard shortcut for the sitting action. Default: X");
-            var myLogSource = BepInEx.Logging.Logger.CreateLogSource("Meditation");
-            myLogSource.LogInfo("Awaken");
-            BepInEx.Logging.Logger.Sources.Remove(myLogSource);
-            new Harmony("sco.savantic.meditation").PatchAll();
+            Logger.LogInfo("Awaken");
+            new Harmony(ID).PatchAll();
         }
     }
 
@@ -87,24 +88,33 @@ namespace Meditation
         {
             if (Meditation.EnableBurntSitRegen.Value)
             {
-                UpdateStats(instance, "m_burntStamina", Meditation.BurntStaminaRegen.Value, instance.ActiveMaxStamina, 0.9f);
-                UpdateStats(instance, "m_burntHealth", Meditation.BurntHealthRegen.Value, instance.ActiveMaxHealth, 0.9f);
-                UpdateStats(instance, "m_burntMana", Meditation.BurntManaRegen.Value, instance.ActiveMaxMana, 0.5f);
+                UpdateBurntStats(instance, "m_burntStamina", Meditation.BurntStaminaRegen.Value, instance.MaxStamina);
+                UpdateBurntStats(instance, "m_burntHealth", Meditation.BurntHealthRegen.Value, instance.MaxHealth);
+                UpdateBurntStats(instance, "m_burntMana", Meditation.BurntManaRegen.Value, instance.MaxMana);
             }
             if (Meditation.EnableCurrentSitRegen.Value)
             {
-                UpdateStats(instance, "m_stamina", Meditation.CurrentStaminaRegen.Value, instance.ActiveMaxStamina, 1.0f);
-                UpdateStats(instance, "m_health", Meditation.CurrentHealthRegen.Value, instance.ActiveMaxHealth, 1.0f);
-                UpdateStats(instance, "m_mana", Meditation.CurrentManaRegen.Value, instance.ActiveMaxMana, 1.0f);
+                UpdateStats(instance, "m_stamina", Meditation.CurrentStaminaRegen.Value, instance.ActiveMaxStamina);
+                UpdateStats(instance, "m_health", Meditation.CurrentHealthRegen.Value, instance.ActiveMaxHealth);
+                UpdateStats(instance, "m_mana", Meditation.CurrentManaRegen.Value, instance.ActiveMaxMana);
             }                   
         }
 
-        private static void UpdateStats(PlayerCharacterStats instance, string fieldName, float configValue, float maxValue, float modifier)
+        private static void UpdateBurntStats(PlayerCharacterStats instance, string fieldName, float configValue, float maxValue)
         {
             FieldInfo field = typeof(CharacterStats).GetField(fieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (configValue != 0)
             {
-                field.SetValue(instance, Mathf.Clamp((float)field.GetValue(instance) - configValue * UpdateDeltaTime(instance), 0f, maxValue * modifier));
+                field.SetValue(instance, Mathf.Clamp(((float)field.GetValue(instance)) - (configValue * UpdateDeltaTime(instance)), 0f, maxValue));
+            }
+        }
+
+        private static void UpdateStats(PlayerCharacterStats instance, string fieldName, float configValue, float maxValue)
+        {
+            FieldInfo field = typeof(CharacterStats).GetField(fieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (configValue != 0)
+            {
+                field.SetValue(instance, Mathf.Clamp(((float)field.GetValue(instance)) + (configValue * UpdateDeltaTime(instance)), 0f, maxValue));
             }
         }
 
