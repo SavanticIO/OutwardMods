@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Meditation
 {
-    [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.4")]
+    [BepInPlugin("sco.savantic.meditation", "Meditation", "2.0.5")]
     public class Meditation : BaseUnityPlugin
     {
         public static ConfigEntry<bool> EnableBurntSitRegen;
@@ -121,7 +121,7 @@ namespace Meditation
     {
         static void Postfix(LocalCharacterControl __instance)
         {
-            if (__instance.InputLocked)
+            if (__instance.InputLocked || __instance.Character.CharacterUI.ChatPanel.IsChatFocused)
             {
                 return;
             }
