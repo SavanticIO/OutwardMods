@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace RemoveEnchantLimit
 {
-    [BepInPlugin("sco.savantic.removeenchantlimit", "RemoveEnchantLimit", "0.8.0")]
+    [BepInPlugin("sco.savantic.removeenchantlimit", "RemoveEnchantLimit", "0.9.0")]
     public class RemoveEnchantLimit : BaseUnityPlugin
     {
         void Awake()
@@ -51,15 +51,40 @@ namespace RemoveEnchantLimit
         static bool Prefix(Item __instance, ref string[] _infos)
         {
             var myLogSource = BepInEx.Logging.Logger.CreateLogSource("RemoveEnchantLimit");
+            myLogSource.LogInfo("OnReceiveNetworkSync");
             __instance.m_synced = false;
             __instance.m_receivedInfos = _infos;
-            __instance.m_lastReceivedExtraData.Clear();       
-            string[] strArray1 = __instance.m_receivedInfos[12].Split('/');
-            if (strArray1.Length == 2 && !string.IsNullOrEmpty(strArray1[0]) && !string.IsNullOrEmpty(strArray1[1]))
+            __instance.m_lastReceivedExtraData.Clear();
+            bool enchantFound = false;
+            int enchantIndex = 999;
+            string[] strArray1 = __instance.m_receivedInfos[12].Split(';');
+            for (int index = 0; index < strArray1.Length; ++index)
             {
-                __instance.m_lastReceivedExtraData.Add(strArray1[0], strArray1[1]);
-            }      
-            if (!NetworkLevelLoader.Instance.IsOverallLoadingDone && (double)__instance.m_startLoadingInfoTime == -999.0)
+                if (strArray1[index].Contains("Enchantment"))
+                {
+                    enchantFound = true;
+                    enchantIndex = index;
+                }
+                if (!strArray1[index].Contains("Enchantment") && strArray1[index].Length > 1)
+                {
+                    enchantFound = false;
+                    enchantIndex = 999;
+                }
+                if (strArray1[index].Length == 1 && enchantFound && enchantIndex < 999)
+                {
+                    strArray1[enchantIndex] = strArray1[enchantIndex] + ";" + strArray1[index];
+                }
+            }
+            for (int index = 0; index < strArray1.Length; ++index)
+            {
+                if (!string.IsNullOrEmpty(strArray1[index]))
+                {
+                    string[] strArray2 = strArray1[index].Split('/');
+                    if (strArray2.Length == 2 && !string.IsNullOrEmpty(strArray2[0]) && !__instance.m_lastReceivedExtraData.ContainsKey(strArray2[0]))
+                        __instance.m_lastReceivedExtraData.Add(strArray2[0], strArray2[1]);
+                }
+            }
+            if (!NetworkLevelLoader.Instance.IsOverallLoadingDone && __instance.m_startLoadingInfoTime == -999.0)
                 __instance.m_startLoadingInfoTime = Time.time;
             string info = _infos[13];
             if (string.IsNullOrEmpty(info))
@@ -72,7 +97,7 @@ namespace RemoveEnchantLimit
                     string[] _array = strArray3[index].Split(';');
                     ItemExtension _outValue;
                     if (__instance.m_extensions.TryGetValue(_array[0], out _outValue))
-                        _outValue.OnReceiveNetworkSync(_array.Skip<string>(1));
+                        _outValue.OnReceiveNetworkSync(_array.Skip(1));
                 }
             }
             BepInEx.Logging.Logger.Sources.Remove(myLogSource);
